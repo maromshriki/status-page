@@ -4,6 +4,7 @@ site_url: https://docs.status-page.dev/
 repo_name: status-page/status-page
 repo_url: https://github.com/status-page/status-page
 edit_uri: 'edit/main/docs/'
+
 theme:
   name: material
   custom_dir: docs/_theme/
@@ -20,6 +21,7 @@ theme:
       toggle:
         icon: material/lightbulb
         name: Switch to Light Mode
+
 plugins:
   - search
   - mkdocstrings:
@@ -38,16 +40,20 @@ plugins:
             show_root_full_path: false
             show_root_toc_entry: false
             show_source: false
+  - autorefs:
+      link_titles: auto
+
 extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/status-page/status-page
+
 markdown_extensions:
     - admonition
     - attr_list
     - pymdownx.emoji:
-        emoji_index: !!python/name:materialx.emoji.twemoji
-        emoji_generator: !!python/name:materialx.emoji.to_svg
+        emoji_index: !!python/name:material.extensions.emoji.twemoji
+        emoji_generator: !!python/name:material.extensions.emoji.to_svg
     - pymdownx.superfences:
         custom_fences:
           - name: mermaid
@@ -55,8 +61,10 @@ markdown_extensions:
             format: !!python/name:pymdownx.superfences.fence_code_format
     - pymdownx.tabbed:
         alternate_style: true
+
 extra_css:
     - extra.css
+
 nav:
     - Introduction: 'index.md'
     - Installation:
@@ -70,3 +78,5 @@ nav:
     - Release Notes:
         - Overview: 'release-notes/index.md'
         - Version 2.0: 'release-notes/version-2.0.md'
+
+

@@ -15,13 +15,13 @@ django_browser_reload==1.6.0
 djangorestframework==3.14.0
 drf-yasg==1.21.4
 gunicorn==20.1.0
-mkdocs-material==8.5.11
-mkdocs==1.4.2
+mkdocs-material
+mkdocs
 mkdocstrings[python-legacy]==0.19.0
 netaddr==0.8.0
 phonenumbers==8.12.57
 psycopg2==2.9.5
-rq-scheduler==0.11.0
+rq-scheduler
 segno==1.5.2
 swagger-spec-validator==3.0.3
 typing-extensions==4.4.0
