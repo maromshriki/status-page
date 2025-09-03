@@ -1,4 +1,4 @@
-#!/home/ec2-user/myproject/msdw-app/venv/bin/python3.10
+#!/opt/status-page/venv/bin/python3.10
 import sys
 from gunicorn.app.wsgiapp import run
 if __name__ == '__main__':
