@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:15
+    container_name: statuspage-db
+    environment:
+      POSTGRES_USER: statususer
+      POSTGRES_PASSWORD: statuspass
+      POSTGRES_DB: statusdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: statuspage-redis
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    container_name: statuspage-web
+    command: python3 statuspage/manage.py runserver 0.0.0.0:8000 --insecure
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      POSTGRES_DB: statusdb
+      POSTGRES_USER: statususer
+      POSTGRES_PASSWORD: statuspass
+      POSTGRES_HOST: db
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+
+  rq:
+    build: .
+    container_name: statuspage-rq
+    command: rq worker default
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+
+volumes:
+  db_data:
+
