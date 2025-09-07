@@ -1,11 +1,13 @@
+version: '3.9'
+
 services:
   db:
     image: postgres:15
     container_name: statuspage-db
     environment:
-      POSTGRES_USER: statususer
-      POSTGRES_PASSWORD: statuspass
-      POSTGRES_DB: statusdb
+      POSTGRES_USER: statuspage
+      POSTGRES_PASSWORD: statuspagemsdw
+      POSTGRES_DB: statuspage
     ports:
       - "5432:5432"
     volumes:
@@ -25,9 +27,9 @@ services:
       - "8000:8000"
     environment:
       REDIS_URL: redis://redis:6379/0
-      POSTGRES_DB: statusdb
-      POSTGRES_USER: statususer
-      POSTGRES_PASSWORD: statuspass
+      POSTGRES_DB: statuspage
+      POSTGRES_USER: statuspage
+      POSTGRES_PASSWORD: statuspagemsdw
       POSTGRES_HOST: db
     depends_on:
       - db
