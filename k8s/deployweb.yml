@@ -39,10 +39,9 @@ metadata:
   name: web
   namespace: statuspage
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - port: 8000      
-      targetPort: 8000
-      nodePort: 30080 
+      targetPort: 8000 
   selector:
     app: web
