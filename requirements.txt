@@ -21,6 +21,7 @@ mkdocstrings[python-legacy]==0.19.0
 netaddr==0.8.0
 phonenumbers==8.12.57
 psycopg2==2.9.5
+rq==1.9.0
 rq-scheduler
 segno==1.5.2
 swagger-spec-validator==3.0.3
