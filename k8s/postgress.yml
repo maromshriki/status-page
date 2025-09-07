@@ -48,7 +48,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres
+  name: db
   namespace: statuspage
 spec:
   type: ClusterIP
