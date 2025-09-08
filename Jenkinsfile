@@ -1,51 +1,61 @@
 pipeline {
     agent {
-        docker {
-            image 'maven:3.9.5-eclipse-temurin-17'   // Example Docker image, replace if needed
-            args '-v /root/.m2:/root/.m2'           // Cache Maven dependencies (optional)
-        }
+        any
     }
 
     environment {
-        APP_NAME = "my-application"
-        DOCKER_REGISTRY = "registry.example.com"
+        IMAGE_NAME_WEB = "status-page-web"
+        IMAGE_NAME_RQ = "status-page-rq"
+        FILE_NAME= "Jenkinsfile"
+        PRODUCTION_SERVER = "10.0.1.110"
+        PRODUCTION_USER = "ec2-user"
+        DEV_SERVER = "10.0.1.29"
+        DEV_USER = "ubuntu"
+        CICD_SERVER = "10.0.1.205"
+        CICD_USER = "ec2-user"
+        SSH_CREDENTIALS_ID_PROD = 'ssh-to-prod-server'
+        SSH_CREDENTIALS_ID_DEV = 'ssh-to-dev-server'
+        APP_NAME = "status-page"
+        REMOTE_REGISTRY = "992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web"
         DEPLOY_ENV = "${BRANCH_NAME == 'main' ? 'production' : 'development'}"
     }
 
-    stages {
-        // Common Stage (applies to all branches)
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
+    stages
         // Development branch stages
         stage('Dev Build') {
-            when { branch 'dev' }
+            when { changeRequest() }
             steps {
-                sh "mvn clean compile"
+                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+                  sh 'docker-compose build'
+                  sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page; docker-compose build"'
             }
         }
 
-        stage('Dev Test') {
-            when { branch 'dev' }
+        stage('Dev deploy to minkube cluster') {
+           when { changeRequest() }
             steps {
-                sh "mvn test"
+                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+                  sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page/k82; kubectl apply -f ." '
             }
         }
 
-        stage('Dev Package') {
-            when { branch 'dev' }
+        stage('Dev tests') {
+            when { changeRequest() }
             steps {
-                sh "mvn package -DskipTests"
+                sh "echo sometests..."
             }
         }
 
-        stage('Dev Deploy') {
-            when { branch 'dev' }
+        stage('Dev Deploy to ecr with specific tagging') {
+            when { changeRequest() }
             steps {
-                echo "Deploying ${APP_NAME} to ${DEPLOY_ENV}"
+                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+                    sh 'docker tag $IMAGE_NAME_WEB 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
+                    sh 'docker tag $IMAGE_NAME_RQ 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-rq-$CHANGE_ID'
+                    sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
+                    sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
+
+                          
             }
         }
 
