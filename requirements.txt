@@ -26,3 +26,5 @@ rq-scheduler
 segno==1.5.2
 swagger-spec-validator==3.0.3
 typing-extensions==4.4.0
+pytest-django
+pytest
