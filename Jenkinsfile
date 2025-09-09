@@ -40,8 +40,11 @@ pipeline {
 
         stage('Dev tests') {
             when { changeRequest() }
-            steps {
-                sh "echo sometests..."
+                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+                    steps {
+                        sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page/; docker-compose run --rm"'
+                        sh "echo sometests..."
+                    }
             }
         }
 
