@@ -102,3 +102,9 @@ pipeline {
       steps {
         sh """
           docker build -t ${REMOTE_REGISTRY}/${APP_NAME}:${env.BUILD_NUMBER} .
+          """
+        }
+      }
+  }
+}
+        
