@@ -21,10 +21,10 @@ pipeline {
     stages {
         stage('Dev Build') {
             when { changeRequest() }
-            steps {
-                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
-                  sh 'docker-compose build'
-                  sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page; docker-compose build"'
+                steps {
+                    sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+                      sh 'docker-compose build'
+                      sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page; docker-compose build"'
                         }
                   }
          }
@@ -40,8 +40,8 @@ pipeline {
 
         stage('Dev tests') {
             when { changeRequest() }
-                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
-                    steps {
+                steps {
+                    sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
                         sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page/; docker-compose run --rm"'
                         sh "echo sometests..."
                     }
