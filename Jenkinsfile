@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME_WEB = "status-page-web"
-    IMAGE_NAME_RQ = "status-page-rq"
+    IMAGE_NAME_WEB = "msdw-mbp_pr-$CHANGE_ID-web"
+    IMAGE_NAME_RQ = "msdw-mbp_pr-$CHANGE_ID-rq"
     FILE_NAME = "Jenkinsfile"
     PRODUCTION_SERVER = "10.0.1.110"
     PRODUCTION_USER = "ec2-user"
@@ -46,9 +46,9 @@ pipeline {
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
           sh 'docker tag $IMAGE_NAME_WEB 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
-          sh 'docker tag $IMAGE_NAME_RQ 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-rq-$CHANGE_ID'
+          sh 'docker tag $IMAGE_NAME_RQ 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-rq:pr-rq-$CHANGE_ID'
           sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
-          sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
+          sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-rq:pr-rq-$CHANGE_ID'
         }
       }
     }
