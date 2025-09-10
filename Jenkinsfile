@@ -24,6 +24,8 @@ pipeline {
       when { changeRequest() }
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+          sh '[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0777 ~/.ssh'
+          sh "ssh-keyscan -t rsa,dsa $DEV_server >> ~/.ssh/known_hosts"
           sh 'docker-compose build'
           sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page; docker-compose build'"
         }
