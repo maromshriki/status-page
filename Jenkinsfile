@@ -7,7 +7,7 @@ pipeline {
     FILE_NAME = "Jenkinsfile"
     PRODUCTION_SERVER = "10.0.1.110"
     PRODUCTION_USER = "ec2-user"
-    DEV_SERVER = "10.0.1.29"
+    DEV_SERVER = "10.0.2.14"
     DEV_USER = "ubuntu"
     CICD_SERVER = "10.0.1.205"
     CICD_USER = "ec2-user"
