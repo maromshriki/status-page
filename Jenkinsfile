@@ -39,16 +39,6 @@ pipeline {
       }
     }
 
-    stage('Dev tests') {
-      when { changeRequest() }
-      steps {
-        sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
-          sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page/; docker-compose run --rm"'
-          sh "echo sometests..."
-        }
-      }
-    }
-
     stage('Dev Deploy to ecr with specific tagging') {
       when { changeRequest() }
       steps {
