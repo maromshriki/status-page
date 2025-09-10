@@ -25,7 +25,7 @@ pipeline {
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
           sh 'docker-compose build'
-          sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page; docker-compose build"'
+          sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page; docker-compose build'"
         }
       }
     }
@@ -34,7 +34,7 @@ pipeline {
       when { changeRequest() }
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
-          sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page/k82; kubectl apply -f ."'
+          sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page/k82; kubectl apply -f .'"
         }
       }
     }
