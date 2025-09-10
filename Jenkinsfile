@@ -45,6 +45,7 @@ pipeline {
       when { changeRequest() }
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+          sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382545251.dkr.ecr.us-east-1.amazonaws.com'
           sh 'docker tag $IMAGE_NAME_WEB 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
           sh 'docker tag $IMAGE_NAME_RQ 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-rq:pr-rq-$CHANGE_ID'
           sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
