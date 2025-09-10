@@ -17,7 +17,7 @@ spec:
         - name: ecr-cred
       containers:
         - name: web
-          image: 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:latest
+          image: status-page-web
           command: ["python3", "statuspage/manage.py", "runserver", "0.0.0.0:8000", "--insecure"]
           env:
             - name: REDIS_URL
