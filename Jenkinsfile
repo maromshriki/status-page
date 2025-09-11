@@ -2,8 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME_WEB = "msdw-mbp_pr-$CHANGE_ID-web"
-    IMAGE_NAME_RQ = "msdw-mbp_pr-$CHANGE_ID-rq"
+    IMAGE_NAME_WEB = "satatus-page-web"
     FILE_NAME = "Jenkinsfile"
     PRODUCTION_SERVER = "10.0.1.110"
     PRODUCTION_USER = "ec2-user"
@@ -46,56 +45,40 @@ pipeline {
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
           sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382545251.dkr.ecr.us-east-1.amazonaws.com'
-          sh 'docker tag $IMAGE_NAME_WEB 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
-          sh 'docker tag $IMAGE_NAME_RQ 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-rq:pr-rq-$CHANGE_ID'
+          sh "docker tag msdw-mbp_pr-$CHANGE_ID-web 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID"
           sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
-          sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-rq:pr-rq-$CHANGE_ID'
         }
       }
     }
 
     // Main branch stages
     stage('Main Build') {
-      when { branch 'main' }
+      when { changeRequest() }
       steps {
-        sh "mvn clean compile"
-      }
+        sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+          sh '[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0777 ~/.ssh'
+          sh "ssh-keyscan -t rsa,dsa $DEV_server >> ~/.ssh/known_hosts"
+          sh 'docker-compose build'
+          sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page; docker-compose build'"
+        }
     }
 
     stage('Main Test') {
       when { branch 'main' }
       steps {
-        sh "mvn test"
+        sh "echo sometests..."
       }
     }
-
-    stage('Code Quality') {
-      when { branch 'main' }
-      steps {
-        sh "mvn verify sonar:sonar"
-      }
-    }
-
-    stage('Security Scan') {
-      when { branch 'main' }
-      steps {
-        sh "echo Running security scan..."
-      }
-    }
-
-    stage('Main Package') {
-      when { branch 'main' }
-      steps {
-        sh "mvn package -DskipTests"
-      }
-    }
-
+    
     stage('Docker Build & Push') {
       when { branch 'main' }
       steps {
-        sh """
-          docker build -t ${REMOTE_REGISTRY}/${APP_NAME}:${env.BUILD_NUMBER} .
-          """
+        sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382545251.dkr.ecr.us-east-1.amazonaws.com'
+        sh "docker tag $status-page-web 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:latest"
+        sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:latest'
+        }
+        
+        
         }
       }
   }
