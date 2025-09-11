@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME_WEB = "satatus-page-web"
+    IMAGE_NAME_WEB = "msdw-mbp_main-web"
     FILE_NAME = "Jenkinsfile"
     PROD_SERVER = "10.0.12.164"
     PROD_USER = "ec2-user"
