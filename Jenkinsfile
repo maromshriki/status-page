@@ -53,7 +53,7 @@ pipeline {
 
     // Main branch stages
     stage('Main Build') {
-      when { changeRequest() }
+      when { branch 'main' }
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
           sh '[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0777 ~/.ssh'
@@ -74,7 +74,7 @@ pipeline {
       when { branch 'main' }
       steps {
         sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382545251.dkr.ecr.us-east-1.amazonaws.com'
-        sh "docker tag $status-page-web 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:latest"
+        sh "docker tag $IMAGE_NAME_WEB 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:latest"
         sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:latest'
         }
         
