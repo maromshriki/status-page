@@ -4,8 +4,8 @@ pipeline {
   environment {
     IMAGE_NAME_WEB = "satatus-page-web"
     FILE_NAME = "Jenkinsfile"
-    PRODUCTION_SERVER = "10.0.1.110"
-    PRODUCTION_USER = "ec2-user"
+    PROD_SERVER = "10.0.12.164"
+    PROD_USER = "ec2-user"
     DEV_SERVER = "10.0.2.14"
     DEV_USER = "ubuntu"
     CICD_SERVER = "10.0.1.205"
@@ -24,7 +24,7 @@ pipeline {
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
           sh '[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0777 ~/.ssh'
-          sh "ssh-keyscan -t rsa,dsa $DEV_server >> ~/.ssh/known_hosts"
+          sh "ssh-keyscan -t rsa,dsa $DEV_SERVER >> ~/.ssh/known_hosts"
           sh 'docker-compose build'
           sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page; docker-compose build'"
         }
