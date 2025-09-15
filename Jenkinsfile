@@ -9,8 +9,9 @@ pipeline {
     DEV_USER = "ubuntu"
     CICD_SERVER = "10.0.1.205"
     CICD_USER = "ec2-user"
-    SSH_CREDENTIALS_ID_PROD = 'ssh-to-prod-server'
+    SSH_CREDENTIALS_ID_PROD = 'ssh-ekscontrol'
     SSH_CREDENTIALS_ID_DEV = 'ssh-to-dev-server'
+    SSH_EKS_CREDS = 'ssh-ekscontrol'
     APP_NAME = "status-page"
     REMOTE_REGISTRY = "992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web"
     DEPLOY_ENV = "${BRANCH_NAME == 'main' ? 'production' : 'development'}"
@@ -53,7 +54,7 @@ pipeline {
     }
 
     stage('Main Build') {
-      when { branch 'main' }
+      when { branch 'dev' }
       steps {
         sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
           sh '[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0777 ~/.ssh'
@@ -65,14 +66,14 @@ pipeline {
     }
 
     stage('Main Test') {
-      when { branch 'main' }
+      when { branch 'dev' }
       steps {
         sh "echo 'Running tests...'"
       }
     }
 
     stage('Docker Build & Push') {
-      when { branch 'main' }
+      when { branch 'dev' }
       steps {
         sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382545251.dkr.ecr.us-east-1.amazonaws.com'
         sh "docker tag $IMAGE_NAME_WEB $REMOTE_REGISTRY:${BUILD_TAG}"
@@ -87,12 +88,12 @@ pipeline {
           script {
             try {
               sh """
-                aws eks --region us-east-1 update-kubeconfig --name your-eks-cluster-name
+                aws eks --region us-east-1 update-kubeconfig --name msdw-eks
                 kubectl apply -f k8s/
-                kubectl set image deployment/status-page status-page=$REMOTE_REGISTRY:${BUILD_TAG}
+                kubectl set image deployment/status-page status-page=$REMOTE_REGISTRY:latest 
                 kubectl rollout status deployment/status-page
               """
-            } catch (err) {
+            } catch (err) {	
               echo "Deployment failed! Rolling back..."
               sh "kubectl rollout undo deployment/status-page"
               error("Rollback executed due to failure.")
