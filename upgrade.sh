@@ -58,6 +58,7 @@ eval $COMMAND || exit 1
 pip -V
 
 # Install necessary system packages
+COMMAND="sudo apt install build-essential python3-dev"
 COMMAND="pip install wheel"
 echo "Installing Python system packages ($COMMAND)..."
 eval $COMMAND || exit 1

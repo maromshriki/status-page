@@ -1,5 +1,4 @@
 Markdown==3.3.7
-Pillow==9.3.0
 PyYAML==6.0
 bleach==5.0.1
 django-filter==22.1
@@ -20,7 +19,7 @@ mkdocs
 mkdocstrings[python-legacy]==0.19.0
 netaddr==0.8.0
 phonenumbers==8.12.57
-psycopg2==2.9.5
+psycopg2-binary==2.9.5
 rq==1.9.0
 rq-scheduler
 segno==1.5.2
@@ -28,3 +27,7 @@ swagger-spec-validator==3.0.3
 typing-extensions==4.4.0
 pytest-django
 pytest
+
+psycopg2
+
+
