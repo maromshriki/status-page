@@ -1,113 +1,114 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        IMAGE_NAME_WEB = "status-page-web"
-        IMAGE_NAME_RQ = "status-page-rq"
-        FILE_NAME= "Jenkinsfile"
-        PRODUCTION_SERVER = "10.0.1.110"
-        PRODUCTION_USER = "ec2-user"
-        DEV_SERVER = "10.0.1.29"
-        DEV_USER = "ubuntu"
-        CICD_SERVER = "10.0.1.205"
-        CICD_USER = "ec2-user"
-        SSH_CREDENTIALS_ID_PROD = 'ssh-to-prod-server'
-        SSH_CREDENTIALS_ID_DEV = 'ssh-to-dev-server'
-        APP_NAME = "status-page"
-        REMOTE_REGISTRY = "992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web"
-        DEPLOY_ENV = "${BRANCH_NAME == 'main' ? 'production' : 'development'}"
+  environment {
+    IMAGE_NAME_WEB = "msdw-mbp_main-web"
+    PROD_SERVER = "10.0.12.164"
+    PROD_USER = "ec2-user"
+    DEV_SERVER = "10.0.2.14"
+    DEV_USER = "ubuntu"
+    CICD_SERVER = "10.0.1.205"
+    CICD_USER = "ec2-user"
+    SSH_CREDENTIALS_ID_PROD = 'ssh-to-prod-server'
+    SSH_CREDENTIALS_ID_DEV = 'ssh-to-dev-server'
+    APP_NAME = "status-page"
+    REMOTE_REGISTRY = "992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web"
+    DEPLOY_ENV = "${BRANCH_NAME == 'main' ? 'production' : 'development'}"
+    BUILD_TAG = "${BRANCH_NAME == 'main' ? "main-${env.BUILD_NUMBER}" : "pr-${CHANGE_ID}"}"
+    SLACK_CHANNEL = '#devops-alerts'
+  }
+
+  stages {
+
+    stage('Dev Build') {
+      when { changeRequest() }
+      steps {
+        sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+          sh '[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0777 ~/.ssh'
+          sh "ssh-keyscan -t rsa,dsa $DEV_SERVER >> ~/.ssh/known_hosts"
+          sh 'docker-compose build'
+          sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page; docker-compose build'"
+        }
+      }
     }
 
-    stages {
-        stage('Dev Build') {
-            when { changeRequest() }
-            steps {
-                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
-                  sh 'docker-compose build'
-                  sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page; docker-compose build"'
-                        }
-                  }
-         }
-
-        stage('Dev deploy to minkube cluster') {
-           when { changeRequest() }
-            steps {
-                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
-                  sh 'ssh -t $DEV_USER@$DEV_SERVER "cd /opt/status-page/k82; kubectl apply -f ." '
-                  }
-             }
+    stage('Dev Deploy to Minikube') {
+      when { changeRequest() }
+      steps {
+        sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+          sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page/minikube; kubectl apply -f .'"
         }
-
-        stage('Dev tests') {
-            when { changeRequest() }
-            steps {
-                sh "echo sometests..."
-            }
-        }
-
-        stage('Dev Deploy to ecr with specific tagging') {
-            when { changeRequest() }
-            steps {
-                sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
-                    sh 'docker tag $IMAGE_NAME_WEB 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
-                    sh 'docker tag $IMAGE_NAME_RQ 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-rq-$CHANGE_ID'
-                    sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'
-                    sh 'docker push 992382545251.dkr.ecr.us-east-1.amazonaws.com/msdw/statuspage-web:pr-web-$CHANGE_ID'                     
-                    }
-              }
-        }
-
-        // Main branch stages
-        stage('Main Build') {
-            when { branch 'main' }
-            steps {
-                sh "mvn clean compile"
-            }
-        }
-
-        stage('Main Test') {
-            when { branch 'main' }
-            steps {
-                sh "mvn test"
-            }
-        }
-
-        stage('Code Quality') {
-            when { branch 'main' }
-            steps {
-                sh "mvn verify sonar:sonar"
-            }
-        }
-
-        stage('Security Scan') {
-            when { branch 'main' }
-            steps {
-                sh "echo Running security scan..."
-            }
-        }
-
-        stage('Main Package') {
-            when { branch 'main' }
-            steps {
-                sh "mvn package -DskipTests"
-            }
-        }
-
-        stage('Docker Build & Push') {
-            when { branch 'main' }
-            steps {
-                sh """
-                    docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_NUMBER} .
-                    docker push ${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_NUMBER}
-                """
-            }
-        }
-
-        stage('Main Deploy') {
-            when { branch 'main' }
-            steps {
-                echo "Deploying ${APP_NAME} to ${DEPLOY_ENV}"
-            }
-        }
+      }
     }
+
+    stage('Dev Deploy to ECR') {
+      when { changeRequest() }
+      steps {
+        sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+          sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382545251.dkr.ecr.us-east-1.amazonaws.com'
+          sh "docker tag msdw-mbp_pr-$CHANGE_ID-web $REMOTE_REGISTRY:${BUILD_TAG}"
+          sh "docker push $REMOTE_REGISTRY:${BUILD_TAG}"
+        }
+      }
+    }
+
+    stage('Main Build') {
+      when { branch 'main' }
+      steps {
+        sshagent(credentials: ["$SSH_CREDENTIALS_ID_DEV"]) {
+          sh '[ -d ~/.ssh ] || mkdir ~/.ssh && chmod 0777 ~/.ssh'
+          sh "ssh-keyscan -t rsa,dsa $DEV_SERVER >> ~/.ssh/known_hosts"
+          sh 'docker-compose build'
+          sh "ssh -t $DEV_USER@$DEV_SERVER 'cd /opt/status-page; docker-compose build'"
+        }
+      }
+    }
+
+    stage('Main Test') {
+      when { branch 'main' }
+      steps {
+        sh "echo 'Running tests...'"
+      }
+    }
+
+    stage('Docker Build & Push') {
+      when { branch 'main' }
+      steps {
+        sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 992382545251.dkr.ecr.us-east-1.amazonaws.com'
+        sh "docker tag $IMAGE_NAME_WEB $REMOTE_REGISTRY:${BUILD_TAG}"
+        sh "docker push $REMOTE_REGISTRY:${BUILD_TAG}"
+      }
+    }
+
+    stage('Deploy to EKS') {
+      when { branch 'main' }
+      steps {
+        sshagent(credentials: ["$SSH_CREDENTIALS_ID_PROD"]) {
+          script {
+            try {
+              sh """
+                aws eks --region us-east-1 update-kubeconfig --name your-eks-cluster-name
+                kubectl apply -f k8s/
+                kubectl set image deployment/status-page status-page=$REMOTE_REGISTRY:${BUILD_TAG}
+                kubectl rollout status deployment/status-page
+              """
+            } catch (err) {
+              echo "Deployment failed! Rolling back..."
+              sh "kubectl rollout undo deployment/status-page"
+              error("Rollback executed due to failure.")
+            }
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    failure {
+      slackSend(channel: "${SLACK_CHANNEL}", message: "Pipeline failed for ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+    }
+    success {
+      slackSend(channel: "${SLACK_CHANNEL}", message: "Pipeline succeeded for ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+    }
+  }
 }

@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-WORKDIR /app
+WORKDIR /opt/status-page
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -16,6 +16,7 @@ COPY . .
 
 # התקנת תלויות
 RUN pip install --upgrade pip setuptools wheel
+RUN pip install wheel
 RUN pip install -r requirements.txt
 RUN chmod +x ./entrypoint.sh
 
