@@ -1,4 +1,4 @@
-#!/opt/status-page/venv/bin/python3
+#!/opt/status-page/venv/bin/python3.10
 import sys
 from wheel.cli import main
 if __name__ == '__main__':
