@@ -28,3 +28,4 @@ typing-extensions==4.4.0
 pytest-django
 pytest
 psycopg2
+whitenoise

@@ -1,53 +1,21 @@
 version: '3.9'
 
 services:
-  db:
-    image: postgres:15
-    container_name: statuspage-db
-    environment:
-      POSTGRES_USER: statuspage
-      POSTGRES_PASSWORD: statuspagemsdw
-      POSTGRES_DB: statuspage
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
+  app:
+    image: statuspage:test          # replace with your app image
+    container_name: status-page-app
 
-  redis:
-    image: redis:7
-    container_name: statuspage-redis
-    ports:
-      - "6379:6379"
-
-  web:
-    build: .
-    container_name: statuspage-web
-    command: python3 statuspage/manage.py runserver 0.0.0.0:8000 --insecure
-    ports:
-      - "8000:8000"
-    environment:
-      REDIS_URL: redis://redis:6379/0
-      POSTGRES_DB: statuspage
-      POSTGRES_USER: statuspage
-      POSTGRES_PASSWORD: statuspagemsdw
-      POSTGRES_HOST: db
+  nginx:
+    image: nginx:latest
+    container_name: status-page-nginx
     depends_on:
-      - db
-      - redis
+      - app
+    ports:
+      - "80:80"
     volumes:
-      - .:/app
-
-  rq:
-    build: .
-    container_name: statuspage-rq
-    command: rq worker default
-    environment:
-      REDIS_URL: redis://redis:6379/0
-    depends_on:
-      - redis
-    volumes:
-      - .:/app
-
-volumes:
-  db_data:
+      # Custom Nginx config
+      - ./status-page.conf:/etc/nginx/conf.d/default.conf:ro
+      # Static files
+      - ./statuspage/static:/usr/share/nginx/html/static:ro
+      # SSL keys
 
